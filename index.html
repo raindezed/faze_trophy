@@ -1,408 +1,510 @@
-<script type="text/javascript">
-        var gk_isXlsx = false;
-        var gk_xlsxFileLookup = {};
-        var gk_fileData = {};
-        function filledCell(cell) {
-          return cell !== '' && cell != null;
-        }
-        function loadFileData(filename) {
-        if (gk_isXlsx && gk_xlsxFileLookup[filename]) {
-            try {
-                var workbook = XLSX.read(gk_fileData[filename], { type: 'base64' });
-                var firstSheetName = workbook.SheetNames[0];
-                var worksheet = workbook.Sheets[firstSheetName];
-
-                // Convert sheet to JSON to filter blank rows
-                var jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1, blankrows: false, defval: '' });
-                // Filter out blank rows (rows where all cells are empty, null, or undefined)
-                var filteredData = jsonData.filter(row => row.some(filledCell));
-
-                // Heuristic to find the header row by ignoring rows with fewer filled cells than the next row
-                var headerRowIndex = filteredData.findIndex((row, index) =>
-                  row.filter(filledCell).length >= filteredData[index + 1]?.filter(filledCell).length
-                );
-                // Fallback
-                if (headerRowIndex === -1 || headerRowIndex > 25) {
-                  headerRowIndex = 0;
-                }
-
-                // Convert filtered JSON back to CSV
-                var csv = XLSX.utils.aoa_to_sheet(filteredData.slice(headerRowIndex)); // Create a new sheet from filtered array of arrays
-                csv = XLSX.utils.sheet_to_csv(csv, { header: 1 });
-                return csv;
-            } catch (e) {
-                console.error(e);
-                return "";
-            }
-        }
-        return gk_fileData[filename] || "";
-        }
-        </script><!DOCTYPE html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FaZe CS2 Trophy Drought</title>
-    <link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
-    <style>
-        body {
-            font-family: 'SF Pro Display', -apple-system, Arial, sans-serif;
-            margin: 0;
-            padding: 0;
-            background-color: #1c2526;
-            color: #ffffff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-        .container {
-            max-width: 1000px;
-            width: 90%;
-            padding: 24px;
-            background: rgba(40, 44, 52, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            backdrop-filter: blur(10px);
-            animation: fadeIn 0.5s ease-in;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        h1 {
-            font-size: 28px;
-            font-weight: 600;
-            text-align: center;
-            margin-bottom: 16px;
-            color: #ffffff;
-        }
-        .highlight {
-            color: #ff6b6b;
-            font-weight: 600;
-        }
-        canvas {
-            max-width: 100%;
-            border-radius: 12px;
-            background: #2c3435;
-            padding: 16px;
-        }
-        .note {
-            font-size: 14px;
-            color: #a1a5b7;
-            margin-top: 16px;
-        }
-        table {
-            width: 100%;
-            border-collapse: separate;
-            border-spacing: 0;
-            margin-top: 24px;
-            background: #2c3435;
-            border-radius: 12px;
-            overflow: hidden;
-            overflow-x: auto;
-        }
-        th, td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #3a4243;
-            min-width: 100px;
-        }
-        th {
-            background: #353b48;
-            font-weight: 600;
-            color: #ffffff;
-        }
-        td {
-            color: #d1d4db;
-            font-size: 12px;
-        }
-        tr {
-            transition: background 0.2s;
-        }
-        tr:hover {
-            background: #3a4243;
-        }
-        .past { color: #ff6b6b; font-weight: 600; }
-        .upcoming { color: #4b6bff; font-weight: 600; }
-        .roster { font-size: 11px; white-space: nowrap; }
-        .player-images {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-top: 4px;
-        }
-        .player-img {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 2px solid #ff6b6b;
-            transition: transform 0.2s;
-            cursor: pointer;
-        }
-        .player-img:hover {
-            transform: scale(1.2);
-        }
-        .player-img.error {
-            background: #3a4243;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
-            color: #a1a5b7;
-            background-image: url('https://www.hltv.org/img/static/team/logo/6667.png');
-            background-size: cover;
-        }
-        @media (max-width: 600px) {
-            .container { padding: 16px; }
-            h1 { font-size: 24px; }
-            .note { font-size: 14px; }
-            th, td { font-size: 10px; padding: 8px; }
-            .player-img { width: 40px; height: 40px; }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FaZe CS2 Trophy Drought</title>
+  <meta name="color-scheme" content="dark light" />
+  <meta name="theme-color" content="#0b0f14" />
+
+  <!-- Modern font -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- Charts + plugins -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.umd.min.js"></script>
+
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --bg-elev: #111821;
+      --card: #131b25;
+      --border: #1f2a36;
+      --text: #e6eaf0;
+      --text-dim: #a9b3bf;
+      --action: #5b97ff;
+      --accent: #ff6b6b;
+      --accent-weak: rgba(255, 107, 107, 0.15);
+      --muted: rgba(255,255,255,0.06);
+      --shadow: 0 10px 30px rgba(0,0,0,0.45);
+    }
+    [data-theme="light"] {
+      --bg: #f7f9fc;
+      --bg-elev: #ffffff;
+      --card: #ffffff;
+      --border: #e7eef7;
+      --text: #0b1220;
+      --text-dim: #38475b;
+      --action: #305dff;
+      --accent: #d13e3e;
+      --accent-weak: rgba(209, 62, 62, 0.12);
+      --muted: rgba(0,0,0,0.05);
+      --shadow: 0 10px 30px rgba(16,24,40,0.1);
+    }
+
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; padding: 0;
+      font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 800px at 10% 0%, rgba(91,151,255,0.1), transparent 40%),
+                  radial-gradient(1200px 800px at 90% 100%, rgba(255,107,107,0.08), transparent 40%),
+                  var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    .page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow: var(--shadow);
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid var(--border);
+      background: var(--bg-elev);
+      border-radius: 14px 14px 0 0;
+    }
+
+    .brand {
+      display: flex; align-items: center; gap: 10px;
+      font-weight: 700; letter-spacing: 0.2px;
+    }
+    .badge {
+      padding: 4px 8px; border-radius: 999px;
+      font-size: 12px; font-weight: 600;
+      background: var(--accent-weak);
+      color: var(--accent);
+      border: 1px solid var(--border);
+    }
+
+    .actions { display: flex; gap: 8px; align-items: center; }
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: var(--muted);
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 8px 12px; border-radius: 10px;
+      font-size: 13px; font-weight: 600;
+      cursor: pointer; transition: 0.15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); background: rgba(255,255,255,0.08); }
+    .btn-primary { background: var(--action); border-color: transparent; color: white; }
+    .btn-primary:hover { filter: brightness(1.05); }
+
+    .content {
+      padding: 18px 16px 16px;
+    }
+
+    .header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 12px; align-items: end;
+      margin-bottom: 14px;
+    }
+    h1 { margin: 0; font-size: 26px; font-weight: 700; }
+    .subtitle { margin: 0; color: var(--text-dim); font-size: 14px; }
+    .metrics { display: flex; gap: 12px; align-items: center; }
+    .pill { padding: 6px 10px; border-radius: 10px; background: var(--muted); border: 1px solid var(--border); font-size: 12px; color: var(--text-dim); }
+
+    canvas { width: 100%; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; padding: 12px; }
+
+    .table-tools { display: flex; gap: 10px; align-items: center; margin: 14px 0 8px; }
+    .input { background: var(--bg-elev); color: var(--text); border: 1px solid var(--border); padding: 8px 10px; border-radius: 10px; width: 280px; max-width: 100%; font-size: 14px; }
+
+    table { width: 100%; border-collapse: separate; border-spacing: 0; background: var(--bg-elev); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+    thead th { position: sticky; top: 0; background: var(--bg-elev); z-index: 1; }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid var(--border); font-size: 13px; }
+    th { font-weight: 700; color: var(--text); user-select: none; cursor: pointer; }
+    td { color: var(--text-dim); vertical-align: top; }
+    tr:hover { background: rgba(255,255,255,0.03); }
+    .past { color: var(--accent); font-weight: 700; }
+    .upcoming { color: var(--action); font-weight: 700; }
+
+    .player-images { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 6px; }
+    .player-img { width: 46px; height: 46px; border-radius: 999px; object-fit: cover; border: 2px solid var(--accent); cursor: pointer; transition: transform 0.15s ease; }
+    .player-img:hover { transform: scale(1.12); }
+    .player-img.error { background-image: url('https://www.hltv.org/img/static/team/logo/6667.png'); background-size: cover; }
+
+    .note { color: var(--text-dim); font-size: 13px; margin-top: 10px; }
+
+    @media (max-width: 720px) {
+      .header { grid-template-columns: 1fr; align-items: start; }
+      h1 { font-size: 22px; }
+      .btn span { display: none; }
+      .btn { padding: 8px; }
+      .player-img { width: 40px; height: 40px; }
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <h1><span id="currentDays">551</span> Days Since FaZe CS2 Trophy (IEM Chengdu 2024)</h1>
-        <p>Updated as of October 16, 2025, 5:02 PM CDT. Hover over points for tournament details, finishes, and rosters. Tap legend to toggle past/upcoming tournaments.</p>
-        <canvas id="trophyDroughtChart"></canvas>
-        <p class="note">
-            <strong>Notes:</strong> Past tournaments (up to CS Asia Championships 2025) in red; upcoming in blue. Rosters/finishes sourced from Liquipedia, HLTV, Esports Earnings.<grok:render type="render_inline_citation">
-<argument name="citation_id">2</argument>
-</grok:render><grok:render type="render_inline_citation">
-<argument name="citation_id">14</argument>
-</grok:render><grok:render type="render_inline_citation">
-<argument name="citation_id">8</argument>
-</grok:render><grok:render type="render_inline_citation">
-<argument name="citation_id">70</argument>
-</grok:render><grok:render type="render_inline_citation">
-<argument name="citation_id">86</argument>
-</grok:render> CS Asia Championships 2025 ongoing (FaZe 9th-12th so far). Check HLTV.org for updates.
-        </p>
-        <h3>Past Tournament Finishes & Rosters</h3>
+  <div class="page">
+    <div class="card">
+      <div class="toolbar">
+        <div class="brand">
+          <span style="font-size:18px">🏆</span>
+          <div>
+            <div>FaZe CS2 Trophy Drought</div>
+            <div class="badge">Live</div>
+          </div>
+        </div>
+        <div class="actions">
+          <button id="btnResetZoom" class="btn" title="Reset chart zoom">🔁 <span>Reset Zoom</span></button>
+          <button id="btnExport" class="btn" title="Export chart as PNG">🖼️ <span>Export PNG</span></button>
+          <button id="btnTheme" class="btn" title="Toggle theme">🌓 <span>Theme</span></button>
+        </div>
+      </div>
+
+      <div class="content">
+        <div class="header">
+          <div>
+            <h1><span id="currentDays">—</span> Days Since FaZe CS2 Trophy (IEM Chengdu 2024)</h1>
+            <p class="subtitle">Updated <span id="lastUpdated">—</span>. Hover points for tournament details and rosters. Click legend to toggle datasets.</p>
+          </div>
+          <div class="metrics">
+            <span class="pill">Baseline: Apr 14, 2024</span>
+            <span class="pill">Ranking: #12 (HLTV, Oct 8, 2025)</span>
+          </div>
+        </div>
+
+        <canvas id="trophyDroughtChart" height="120"></canvas>
+        <p class="note"><strong>Notes:</strong> Red = past tournaments; Blue = upcoming. Data compiled from public esports records.</p>
+
+        <div class="table-tools">
+          <input id="searchInput" class="input" placeholder="Search tournaments or players…" />
+        </div>
+
         <table>
-            <thead>
-                <tr><th>Tournament</th><th>Start Date</th><th>Finish</th><th>Days Since Win</th><th>Roster</th></tr>
-            </thead>
-            <tbody id="finishesTable"></tbody>
+          <thead>
+            <tr>
+              <th data-sort-key="label">Tournament</th>
+              <th data-sort-key="date">Start Date</th>
+              <th data-sort-key="finish">Finish</th>
+              <th data-sort-key="days" style="min-width:120px">Days Since Win</th>
+              <th>Roster</th>
+            </tr>
+          </thead>
+          <tbody id="finishesTable"></tbody>
         </table>
+      </div>
     </div>
+  </div>
 
-    <script>
-        // Player image mapping (HLTV URLs)
-        const playerImages = {
-            'karrigan': { img: 'https://www.hltv.org/img/static/player/7951.png', link: 'https://www.hltv.org/player/7951/karrigan' },
-            'rain': { img: 'https://www.hltv.org/img/static/player/5952.png', link: 'https://www.hltv.org/player/5952/rain' },
-            'frozen': { img: 'https://www.hltv.org/img/static/player/18456.png', link: 'https://www.hltv.org/player/18456/frozen' },
-            'broky': { img: 'https://www.hltv.org/img/static/player/18053.png', link: 'https://www.hltv.org/player/18053/broky' },
-            'ropz': { img: 'https://www.hltv.org/img/static/player/11816.png', link: 'https://www.hltv.org/player/11816/ropz' },
-            'EliGE': { img: 'https://www.hltv.org/img/static/player/14447.png', link: 'https://www.hltv.org/player/14447/elige' },
-            's1mple': { img: 'https://www.hltv.org/img/static/player/7938.png', link: 'https://www.hltv.org/player/7938/s1mple' },
-            'jcobbb': { img: 'https://www.hltv.org/img/static/team/logo/6667.png', link: 'https://www.hltv.org/team/6667/faze' }, // Placeholder
-            'exit': { img: 'https://www.hltv.org/img/static/team/logo/6667.png', link: 'https://www.hltv.org/team/6667/faze' } // Placeholder
-        };
+  <script>
+    // Register plugins if available (UMD globals)
+    try { if (window.ChartDataLabels) Chart.register(window.ChartDataLabels); } catch (e) {}
+    try { if (window["chartjs-plugin-annotation"]) Chart.register(window["chartjs-plugin-annotation"]); } catch (e) {}
+    try { if (window["chartjs-plugin-zoom"]) Chart.register(window["chartjs-plugin-zoom"]); } catch (e) {}
 
-        // Data: Tournaments, days, finishes, rosters
-        const tournamentData = [
-            { label: 'IEM Chengdu 2024', days: 0, finish: '1st', date: '2024-04-08', fullRoster: 'karrigan, rain, frozen, broky, ropz' },
-            { label: 'IEM Dallas 2024', days: 43, finish: '3rd-4th', date: '2024-05-27', fullRoster: 'karrigan, rain, frozen, broky, ropz' },
-            { label: 'Esports World Cup 2024', days: 94, finish: '5th-8th', date: '2024-07-17', fullRoster: 'karrigan, rain, frozen, broky, ropz' },
-            { label: 'BLAST Fall Final 2024', days: 164, finish: '3rd-4th', date: '2024-09-25', fullRoster: 'karrigan, rain, frozen, broky, ropz' },
-            { label: 'Shanghai Major 2024', days: 231, finish: '2nd', date: '2024-12-01', fullRoster: 'karrigan, rain, frozen, broky, ropz' },
-            { label: 'BLAST Rivals Spring 2025', days: 276, finish: '5th', date: '2025-01-15', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
-            { label: 'PGL Cluj-Napoca 2025', days: 302, finish: '5th-6th', date: '2025-02-10', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
-            { label: 'IEM Katowice 2025', days: 317, finish: '3rd-4th', date: '2025-02-25', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
-            { label: 'PGL Bucharest 2025', days: 358, finish: '3rd', date: '2025-04-07', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
-            { label: 'Austin Major 2025', days: 421, finish: '3rd-4th', date: '2025-06-09', fullRoster: 'karrigan, s1mple, rain, EliGE, frozen' },
-            { label: 'Esports World Cup 2025', days: 443, finish: '9th-12th', date: '2025-07-01', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
-            { label: 'IEM Cologne 2025', days: 465, finish: '5th-8th', date: '2025-07-23', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
-            { label: 'BLAST Spring Final 2025', days: 485, finish: '3rd-4th', date: '2025-08-12', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
-            { label: 'FISSURE Playground 2025', days: 514, finish: '9th', date: '2025-09-10', fullRoster: 'karrigan, rain, frozen, broky, jcobbb' },
-            { label: 'BLAST Open Fall 2025', days: 524, finish: '5th', date: '2025-09-20', fullRoster: 'karrigan, rain, frozen, broky, jcobbb' },
-            { label: 'CS Asia Champs 2025', days: 548, finish: '9th-12th (ongoing)', date: '2025-10-14', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' }
-        ];
-        const upcomingData = [
-            { label: 'ESL Pro League S22', days: 554, finish: 'TBD', date: '2025-10-20', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' },
-            { label: 'BLAST Bounty Fall 2025', days: 562, finish: 'TBD', date: '2025-10-28', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' },
-            { label: 'YaLLa Compass S2', days: 575, finish: 'TBD', date: '2025-11-10', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' },
-            { label: 'PGL Belgrade 2025', days: 583, finish: 'TBD', date: '2025-11-18', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' },
-            { label: 'Budapest Major 2025', days: 589, finish: 'TBD', date: '2025-11-24', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' },
-            { label: 'CS2 Major Winter 2025', days: 596, finish: 'TBD', date: '2025-12-01', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' }
-        ];
-        const allLabels = [...tournamentData.map(d => d.label), ...upcomingData.map(d => d.label)];
-        const pastDays = tournamentData.map(d => d.days);
-        const upcomingDays = [...Array(tournamentData.length).fill(null), ...upcomingData.map(d => d.days)];
-        const finishesPast = tournamentData.map(d => d.finish);
-        const finishesUpcoming = upcomingData.map(d => d.finish);
+    // Theme handling
+    const userPref = localStorage.getItem('theme');
+    const systemPrefDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+    const initialTheme = userPref || (systemPrefDark ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', initialTheme);
+    document.getElementById('btnTheme').addEventListener('click', () => {
+      const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+      document.documentElement.setAttribute('data-theme', next);
+      localStorage.setItem('theme', next);
+    });
 
-        // Auto-calculate current days
-        const lastWin = new Date('2024-04-14');
-        const today = new Date();
-        const currentDays = Math.floor((today - lastWin) / (1000 * 60 * 60 * 24));
-        document.getElementById('currentDays').textContent = currentDays;
+    // Player image mapping (HLTV IDs)
+    const playerImages = {
+      karrigan: { img: 'https://www.hltv.org/img/static/player/7951.png', link: 'https://www.hltv.org/player/7951/karrigan' },
+      rain:     { img: 'https://www.hltv.org/img/static/player/5952.png', link: 'https://www.hltv.org/player/5952/rain' },
+      frozen:   { img: 'https://www.hltv.org/img/static/player/18456.png', link: 'https://www.hltv.org/player/18456/frozen' },
+      broky:    { img: 'https://www.hltv.org/img/static/player/18053.png', link: 'https://www.hltv.org/player/18053/broky' },
+      ropz:     { img: 'https://www.hltv.org/img/static/player/11816.png', link: 'https://www.hltv.org/player/11816/ropz' },
+      EliGE:    { img: 'https://www.hltv.org/img/static/player/14447.png', link: 'https://www.hltv.org/player/14447/elige' },
+      s1mple:   { img: 'https://www.hltv.org/img/static/player/7938.png', link: 'https://www.hltv.org/player/7938/s1mple' },
+      jcobbb:   { img: 'https://www.hltv.org/img/static/player/22383.png', link: 'https://www.hltv.org/player/22383/jcobbb' },
+      exit:     { img: 'https://www.hltv.org/img/static/player/11154.png', link: 'https://www.hltv.org/player/11154/exit' },
+    };
 
-        // Function to generate player images HTML
-        function generatePlayerImages(fullRoster) {
-            const players = fullRoster.split(',').map(p => p.trim());
-            let imagesHtml = '<div class="player-images">';
-            players.forEach(player => {
-                const data = playerImages[player] || { img: 'https://www.hltv.org/img/static/team/logo/6667.png', link: 'https://www.hltv.org/team/6667/faze' };
-                imagesHtml += `<img src="${data.img}" alt="${player}" class="player-img" loading="lazy" onerror="this.classList.add('error')" onclick="window.open('${data.link}', '_blank')" title="${player} - HLTV Profile">`;
-            });
-            imagesHtml += '</div>';
-            return imagesHtml;
-        }
+    // Data
+    const tournamentData = [
+      { label: 'IEM Chengdu 2024', days: 0,   finish: '1st',        date: '2024-04-08', fullRoster: 'karrigan, rain, frozen, broky, ropz' },
+      { label: 'IEM Dallas 2024',  days: 43,  finish: '3rd-4th',    date: '2024-05-27', fullRoster: 'karrigan, rain, frozen, broky, ropz' },
+      { label: 'Esports World Cup 2024', days: 94,  finish: '5th-8th',    date: '2024-07-17', fullRoster: 'karrigan, rain, frozen, broky, ropz' },
+      { label: 'BLAST Fall Final 2024',  days: 164, finish: '3rd-4th',    date: '2024-09-25', fullRoster: 'karrigan, rain, frozen, broky, ropz' },
+      { label: 'Shanghai Major 2024',    days: 231, finish: '2nd',        date: '2024-12-01', fullRoster: 'karrigan, rain, frozen, broky, ropz' },
+      { label: 'BLAST Rivals Spring 2025', days: 276, finish: '5th',      date: '2025-01-15', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
+      { label: 'PGL Cluj-Napoca 2025',  days: 302, finish: '5th-6th',     date: '2025-02-10', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
+      { label: 'IEM Katowice 2025',     days: 317, finish: '3rd-4th',     date: '2025-02-25', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
+      { label: 'PGL Bucharest 2025',    days: 358, finish: '3rd',         date: '2025-04-07', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
+      { label: 'Austin Major 2025',     days: 421, finish: '3rd-4th',     date: '2025-06-09', fullRoster: 'karrigan, s1mple, rain, EliGE, frozen' },
+      { label: 'Esports World Cup 2025',days: 443, finish: '9th-12th',    date: '2025-07-01', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
+      { label: 'IEM Cologne 2025',      days: 465, finish: '5th-8th',     date: '2025-07-23', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
+      { label: 'BLAST Spring Final 2025',days: 485, finish: '3rd-4th',    date: '2025-08-12', fullRoster: 'karrigan, rain, frozen, broky, EliGE' },
+      { label: 'FISSURE Playground 2025',days: 514, finish: '9th',        date: '2025-09-10', fullRoster: 'karrigan, rain, frozen, broky, jcobbb' },
+      { label: 'BLAST Open Fall 2025',  days: 524, finish: '5th',         date: '2025-09-20', fullRoster: 'karrigan, rain, frozen, broky, jcobbb' },
+      { label: 'CS Asia Champs 2025',   days: 548, finish: '9th-12th (ongoing)', date: '2025-10-14', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' },
+    ];
 
-        // Populate table with images
-        const tableBody = document.getElementById('finishesTable');
-        tournamentData.forEach(item => {
-            const row = tableBody.insertRow();
-            const imagesHtml = generatePlayerImages(item.fullRoster);
-            row.innerHTML = `<td>${item.label}</td><td>${item.date}</td><td class="past">${item.finish}</td><td>${item.days}</td><td class="roster past">${item.fullRoster} ${imagesHtml}</td>`;
-        });
+    const upcomingData = [
+      { label: 'ESL Pro League S22',       days: 554, finish: 'TBD', date: '2025-10-20', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' },
+      { label: 'BLAST Bounty Fall 2025',   days: 562, finish: 'TBD', date: '2025-10-28', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' },
+      { label: 'YaLLa Compass S2',         days: 575, finish: 'TBD', date: '2025-11-10', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' },
+      { label: 'PGL Belgrade 2025',        days: 583, finish: 'TBD', date: '2025-11-18', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' },
+      { label: 'Budapest Major 2025',      days: 589, finish: 'TBD', date: '2025-11-24', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' },
+      { label: 'CS2 Major Winter 2025',    days: 596, finish: 'TBD', date: '2025-12-01', fullRoster: 'karrigan, frozen, broky, jcobbb, exit' },
+    ];
 
-        // Chart
-        const ctx = document.getElementById('trophyDroughtChart').getContext('2d');
-        new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: allLabels,
-                datasets: [
-                    {
-                        label: 'Days Since Last Trophy (Past)',
-                        data: pastDays,
-                        borderColor: '#ff6b6b',
-                        backgroundColor: 'rgba(255, 107, 107, 0.3)',
-                        fill: true,
-                        tension: 0.2,
-                        pointRadius: 6,
-                        pointHoverRadius: 10,
-                        datalabels: {
-                            display: 'auto',
-                            align: 'top',
-                            offset: 8,
-                            color: '#ff6b6b',
-                            font: { size: 12, weight: 'bold' },
-                            formatter: (value, ctx) => {
-                                if (ctx.dataIndex < tournamentData.length) return tournamentData[ctx.dataIndex].finish;
-                                return '';
-                            }
-                        }
-                    },
-                    {
-                        label: 'Days Since Last Trophy (Upcoming)',
-                        data: upcomingDays,
-                        borderColor: '#4b6bff',
-                        backgroundColor: 'rgba(75, 107, 255, 0.3)',
-                        fill: true,
-                        tension: 0.2,
-                        pointRadius: 6,
-                        pointHoverRadius: 10,
-                        datalabels: {
-                            display: 'auto',
-                            align: 'top',
-                            offset: 8,
-                            color: '#4b6bff',
-                            font: { size: 12, weight: 'bold' },
-                            formatter: (value, ctx) => {
-                                const idx = ctx.dataIndex - tournamentData.length;
-                                if (idx >= 0 && idx < upcomingData.length) return upcomingData[idx].finish;
-                                return '';
-                            }
-                        }
-                    }
-                ]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        display: true,
-                        labels: { color: '#ffffff', font: { size: 14 } },
-                        onClick: (e, legendItem, legend) => {
-                            const index = legendItem.datasetIndex;
-                            const ci = legend.chart;
-                            ci.getDatasetMeta(index).hidden = !ci.getDatasetMeta(index).hidden;
-                            ci.update();
-                        }
-                    },
-                    title: {
-                        display: true,
-                        text: 'Days Since IEM Chengdu 2024 (April 14, 2024)',
-                        color: '#ffffff',
-                        font: { size: 20, weight: '600' }
-                    },
-                    annotation: {
-                        annotations: {
-                            line1: {
-                                type: 'line',
-                                xMin: tournamentData[tournamentData.length - 1].label,
-                                xMax: tournamentData[tournamentData.length - 1].label,
-                                borderColor: '#a1a5b7',
-                                borderWidth: 2,
-                                label: {
-                                    content: 'Today (Oct 16, 2025)',
-                                    display: true,
-                                    position: 'top',
-                                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
-                                    color: '#ffffff',
-                                    font: { size: 12 }
-                                }
-                            }
-                        }
-                    },
-                    tooltip: {
-                        backgroundColor: 'rgba(0, 0, 0, 0.9)',
-                        titleColor: '#ffffff',
-                        bodyColor: '#d1d4db',
-                        callbacks: {
-                            label: function(context) {
-                                const label = context.dataset.label || '';
-                                const value = context.parsed.y;
-                                const idx = context.dataIndex;
-                                let finish = '', fullRoster = '';
-                                if (idx < tournamentData.length) {
-                                    finish = tournamentData[idx].finish;
-                                    fullRoster = tournamentData[idx].fullRoster;
-                                } else {
-                                    finish = upcomingData[idx - tournamentData.length].finish;
-                                    fullRoster = upcomingData[idx - tournamentData.length].fullRoster;
-                                }
-                                return `${label}: ${value} days (${context.label} - ${finish}; Roster: ${fullRoster})`;
-                            }
-                        }
-                    },
-                    datalabels: {
-                        color: '#ffffff',
-                        font: { size: 10 },
-                        formatter: (value, ctx) => {
-                            const idx = ctx.dataIndex;
-                            return idx < tournamentData.length ? finishesPast[idx] : finishesUpcoming[idx - tournamentData.length];
-                        }
-                    }
-                },
-                scales: {
-                    y: {
-                        beginAtZero: true,
-                        title: { display: true, text: 'Days Since Last Trophy', color: '#ffffff', font: { size: 14 } },
-                        grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        ticks: { color: '#d1d4db' }
-                    },
-                    x: {
-                        title: { display: true, text: 'Tournament (Start Date)', color: '#ffffff', font: { size: 14 } },
-                        grid: { display: false },
-                        ticks: { color: '#d1d4db', autoSkip: false, maxRotation: 45, minRotation: 45 }
-                    }
+    // Live days + last updated
+    const lastWin = new Date('2024-04-14T00:00:00Z');
+    const currentDaysEl = document.getElementById('currentDays');
+    const lastUpdatedEl = document.getElementById('lastUpdated');
+    function formatDateTime(dt) {
+      return dt.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+    }
+    function updateLiveMeta() {
+      const now = new Date();
+      const days = Math.floor((now - lastWin) / (1000 * 60 * 60 * 24));
+      currentDaysEl.textContent = days.toLocaleString();
+      lastUpdatedEl.textContent = formatDateTime(now);
+    }
+    updateLiveMeta();
+    setInterval(updateLiveMeta, 60_000);
+
+    // Player images HTML
+    function generatePlayerImages(fullRoster) {
+      const players = fullRoster.split(',').map(p => p.trim());
+      let imagesHtml = '<div class="player-images">';
+      players.forEach(player => {
+        const data = playerImages[player] || { img: 'https://www.hltv.org/img/static/team/logo/6667.png', link: 'https://www.hltv.org/team/6667/faze' };
+        imagesHtml += `<img src="${data.img}" alt="${player}" class="player-img" loading="lazy" onerror="this.classList.add('error')" onclick="window.open('${data.link}', '_blank')" title="${player}">`;
+      });
+      imagesHtml += '</div>';
+      return imagesHtml;
+    }
+
+    // Table rendering + search + sort
+    const tableBody = document.getElementById('finishesTable');
+    const searchInput = document.getElementById('searchInput');
+    const rows = [...tournamentData];
+
+    let sortKey = 'date';
+    let sortAsc = false;
+
+    function renderTable() {
+      const query = (searchInput.value || '').toLowerCase().trim();
+      const filtered = rows.filter(r =>
+        r.label.toLowerCase().includes(query) ||
+        r.fullRoster.toLowerCase().includes(query) ||
+        r.finish.toLowerCase().includes(query)
+      );
+      filtered.sort((a, b) => {
+        const A = a[sortKey];
+        const B = b[sortKey];
+        if (sortKey === 'days') return sortAsc ? A - B : B - A;
+        if (sortKey === 'date') return sortAsc ? A.localeCompare(B) : B.localeCompare(A);
+        return sortAsc ? String(A).localeCompare(String(B)) : String(B).localeCompare(String(A));
+      });
+
+      tableBody.innerHTML = '';
+      filtered.forEach(item => {
+        const row = document.createElement('tr');
+        const imagesHtml = generatePlayerImages(item.fullRoster);
+        row.innerHTML = `
+          <td>${item.label}</td>
+          <td>${item.date}</td>
+          <td class="past">${item.finish}</td>
+          <td style="font-variant-numeric: tabular-nums;">${item.days}</td>
+          <td class="roster past">${item.fullRoster} ${imagesHtml}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+    }
+
+    searchInput.addEventListener('input', renderTable);
+
+    // Click-to-sort
+    document.querySelectorAll('thead th[data-sort-key]').forEach(th => {
+      th.addEventListener('click', () => {
+        const key = th.getAttribute('data-sort-key');
+        if (sortKey === key) sortAsc = !sortAsc; else { sortKey = key; sortAsc = true; }
+        renderTable();
+      });
+    });
+
+    // Initial table
+    renderTable();
+
+    // Chart setup
+    const allLabels = [...tournamentData.map(d => d.label), ...upcomingData.map(d => d.label)];
+    const pastDays = tournamentData.map(d => d.days);
+    const upcomingDays = [...Array(tournamentData.length).fill(null), ...upcomingData.map(d => d.days)];
+    const finishesPast = tournamentData.map(d => d.finish);
+    const finishesUpcoming = upcomingData.map(d => d.finish);
+
+    const ctx = document.getElementById('trophyDroughtChart').getContext('2d');
+
+    const todayLabel = new Date().toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+
+    const chart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: allLabels,
+        datasets: [
+          {
+            label: 'Days Since Last Trophy (Past)',
+            data: pastDays,
+            borderColor: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#ff6b6b',
+            backgroundColor: 'rgba(255, 107, 107, 0.25)',
+            fill: true,
+            tension: 0.22,
+            pointRadius: 5,
+            pointHoverRadius: 9,
+            datalabels: {
+              display: 'auto',
+              align: 'top',
+              offset: 6,
+              color: '#ff6b6b',
+              font: { size: 11, weight: 'bold' },
+              formatter: (value, ctx) => tournamentData[ctx.dataIndex]?.finish || ''
+            }
+          },
+          {
+            label: 'Days Since Last Trophy (Upcoming)',
+            data: upcomingDays,
+            borderColor: getComputedStyle(document.documentElement).getPropertyValue('--action').trim() || '#4b6bff',
+            backgroundColor: 'rgba(75, 107, 255, 0.25)',
+            fill: true,
+            tension: 0.22,
+            pointRadius: 5,
+            pointHoverRadius: 9,
+            datalabels: {
+              display: 'auto',
+              align: 'top',
+              offset: 6,
+              color: '#4b6bff',
+              font: { size: 11, weight: 'bold' },
+              formatter: (value, ctx) => {
+                const idx = ctx.dataIndex - tournamentData.length;
+                return upcomingData[idx]?.finish || '';
+              }
+            }
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: true,
+            labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#fff', font: { size: 13 } },
+            onClick: (e, legendItem, legend) => {
+              const idx = legendItem.datasetIndex;
+              const ci = legend.chart;
+              ci.getDatasetMeta(idx).hidden = !ci.getDatasetMeta(idx).hidden;
+              ci.update();
+            }
+          },
+          title: {
+            display: true,
+            text: 'Days Since IEM Chengdu 2024 (April 14, 2024)',
+            color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#fff',
+            font: { size: 18, weight: '600' }
+          },
+          annotation: {
+            annotations: {
+              line1: {
+                type: 'line',
+                xMin: tournamentData[tournamentData.length - 1].label,
+                xMax: tournamentData[tournamentData.length - 1].label,
+                borderColor: getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim() || '#a1a5b7',
+                borderWidth: 2,
+                label: {
+                  content: `Today (${todayLabel})`,
+                  display: true,
+                  position: 'top',
+                  backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                  color: '#ffffff',
+                  font: { size: 11 }
                 }
-            },
-            plugins: [ChartDataLabels]
-        });
-    </script>
+              }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(0,0,0,0.9)',
+            titleColor: '#ffffff',
+            bodyColor: '#e2e8f0',
+            callbacks: {
+              label: (context) => {
+                const value = context.parsed.y;
+                const idx = context.dataIndex;
+                let finish = '', fullRoster = '';
+                if (idx < tournamentData.length) {
+                  finish = tournamentData[idx].finish;
+                  fullRoster = tournamentData[idx].fullRoster;
+                } else {
+                  finish = upcomingData[idx - tournamentData.length].finish;
+                  fullRoster = upcomingData[idx - tournamentData.length].fullRoster;
+                }
+                return `${value} days — ${finish} (Roster: ${fullRoster})`;
+              }
+            }
+          },
+          datalabels: {
+            color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#fff',
+            font: { size: 10 },
+            formatter: (value, ctx) => {
+              const idx = ctx.dataIndex;
+              return idx < tournamentData.length ? finishesPast[idx] : (idx < (tournamentData.length + upcomingData.length) ? finishesUpcoming[idx - tournamentData.length] : '');
+            }
+          },
+          zoom: {
+            pan: { enabled: true, mode: 'x' },
+            zoom: { wheel: { enabled: true }, pinch: { enabled: true }, mode: 'x' }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { display: true, text: 'Days Since Last Trophy', color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#fff', font: { size: 13 } },
+            grid: { color: 'rgba(255,255,255,0.08)' },
+            ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim() || '#d1d4db' }
+          },
+          x: {
+            title: { display: true, text: 'Tournament (Start Date)', color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#fff', font: { size: 13 } },
+            grid: { display: false },
+            ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--text-dim').trim() || '#d1d4db', autoSkip: false, maxRotation: 45, minRotation: 45 }
+          }
+        }
+      }
+    });
+
+    // Export & reset zoom
+    document.getElementById('btnExport').addEventListener('click', () => {
+      const link = document.createElement('a');
+      link.href = chart.toBase64Image('image/png', 1);
+      link.download = `faze-trophy-drought-${new Date().toISOString().slice(0,10)}.png`;
+      link.click();
+    });
+    document.getElementById('btnResetZoom').addEventListener('click', () => {
+      if (chart.resetZoom) chart.resetZoom();
+    });
+
+    // Update chart colors when theme changes
+    const observer = new MutationObserver(() => chart.update());
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  </script>
 </body>
 </html>
