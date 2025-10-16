@@ -43,30 +43,61 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FaZe CS2 Trophy Drought</title>
-    <link href="https://fonts.cdnfonts.com/css/sf-pro-display" rel="stylesheet">
+    <!-- Inter font (modern, readable) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Charts and plugins -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-annotation@3.0.1/dist/chartjs-plugin-annotation.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom@2.0.1/dist/chartjs-plugin-zoom.min.js"></script>
     <style>
+        :root {
+            --bg: #0b1214;
+            --text: #e6edf3;
+            --muted: #a1a5b7;
+            --card: #141a1c;
+            --card-2: #1c2426;
+            --border: #263033;
+            --accent: #ff6b6b;
+            --accent-blue: #4b6bff;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+        }
+        html[data-theme='light'] {
+            --bg: #f6f8fa;
+            --text: #0a0d14;
+            --muted: #506070;
+            --card: #ffffff;
+            --card-2: #f2f4f7;
+            --border: #e6eaee;
+            --accent: #e53935;
+            --accent-blue: #1e88e5;
+            --shadow: 0 8px 24px rgba(10, 13, 20, 0.08);
+        }
+        * { box-sizing: border-box; }
         body {
-            font-family: 'SF Pro Display', -apple-system, Arial, sans-serif;
+            font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, 'SF Pro Display', Arial, sans-serif;
             margin: 0;
-            padding: 0;
-            background-color: #1c2526;
-            color: #ffffff;
+            padding: 24px;
+            background-color: var(--bg);
+            color: var(--text);
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start;
             min-height: 100vh;
             overflow-x: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
         .container {
-            max-width: 1000px;
-            width: 90%;
+            max-width: 1100px;
+            width: 100%;
             padding: 24px;
-            background: rgba(40, 44, 52, 0.95);
-            border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            background: var(--card-2);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            box-shadow: var(--shadow);
             backdrop-filter: blur(10px);
             animation: fadeIn 0.5s ease-in;
         }
@@ -76,24 +107,59 @@
         }
         h1 {
             font-size: 28px;
-            font-weight: 600;
+            font-weight: 700;
             text-align: center;
-            margin-bottom: 16px;
-            color: #ffffff;
+            margin: 0 0 8px 0;
+            color: var(--text);
         }
         .highlight {
-            color: #ff6b6b;
-            font-weight: 600;
+            color: var(--accent);
+            font-weight: 700;
         }
+        .topbar {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .meta {
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            margin: 8px 0 16px 0;
+        }
+        .btn {
+            appearance: none;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 10px;
+            cursor: pointer;
+            font: 500 13px/1 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+            transition: transform 0.08s ease, background 0.2s ease, border-color 0.2s ease;
+        }
+        .btn:hover { transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn-ghost { background: transparent; }
+        .btn-primary { border-color: var(--accent); color: var(--accent); }
+        .btn-blue { border-color: var(--accent-blue); color: var(--accent-blue); }
         canvas {
             max-width: 100%;
             border-radius: 12px;
-            background: #2c3435;
+            background: var(--card);
             padding: 16px;
         }
         .note {
             font-size: 14px;
-            color: #a1a5b7;
+            color: var(--muted);
             margin-top: 16px;
         }
         table {
@@ -101,7 +167,7 @@
             border-collapse: separate;
             border-spacing: 0;
             margin-top: 24px;
-            background: #2c3435;
+            background: var(--card);
             border-radius: 12px;
             overflow: hidden;
             overflow-x: auto;
@@ -109,26 +175,31 @@
         th, td {
             padding: 12px;
             text-align: left;
-            border-bottom: 1px solid #3a4243;
+            border-bottom: 1px solid var(--border);
             min-width: 100px;
         }
         th {
-            background: #353b48;
-            font-weight: 600;
-            color: #ffffff;
+            background: var(--card-2);
+            font-weight: 700;
+            color: var(--text);
+            user-select: none;
+            cursor: pointer;
+            position: sticky;
+            top: 0;
+            z-index: 1;
         }
         td {
-            color: #d1d4db;
+            color: var(--text);
             font-size: 12px;
         }
         tr {
             transition: background 0.2s;
         }
         tr:hover {
-            background: #3a4243;
+            background: rgba(255,255,255,0.03);
         }
-        .past { color: #ff6b6b; font-weight: 600; }
-        .upcoming { color: #4b6bff; font-weight: 600; }
+        .past { color: var(--accent); font-weight: 700; }
+        .upcoming { color: var(--accent-blue); font-weight: 700; }
         .roster { font-size: 11px; white-space: nowrap; }
         .player-images {
             display: flex;
@@ -141,7 +212,7 @@
             height: 50px;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid #ff6b6b;
+            border: 2px solid var(--accent);
             transition: transform 0.2s;
             cursor: pointer;
         }
@@ -149,52 +220,123 @@
             transform: scale(1.2);
         }
         .player-img.error {
-            background: #3a4243;
+            background: var(--card-2);
             display: flex;
             align-items: center;
             justify-content: center;
             font-size: 20px;
-            color: #a1a5b7;
+            color: var(--muted);
             background-image: url('https://www.hltv.org/img/static/team/logo/6667.png');
             background-size: cover;
         }
+        .table-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+        .search {
+            flex: 1 1 260px;
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .input {
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: var(--card);
+            color: var(--text);
+            font-size: 14px;
+        }
+        .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,1px,1px); white-space: nowrap; border: 0; }
         @media (max-width: 600px) {
             .container { padding: 16px; }
             h1 { font-size: 24px; }
-            .note { font-size: 14px; }
+            .note { font-size: 13px; }
             th, td { font-size: 10px; padding: 8px; }
             .player-img { width: 40px; height: 40px; }
+            .toolbar { justify-content: flex-start; }
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1><span id="currentDays">551</span> Days Since FaZe CS2 Trophy (IEM Chengdu 2024)</h1>
-        <p>Updated as of October 16, 2025, 5:02 PM CDT. Hover over points for tournament details, finishes, and rosters. Tap legend to toggle past/upcoming tournaments.</p>
+        <div class="topbar">
+            <div class="meta" aria-live="polite">Updated: <span id="lastUpdated">—</span></div>
+            <div>
+                <button id="themeToggle" class="btn btn-ghost" aria-pressed="false" aria-label="Toggle light and dark theme">🌙 Theme</button>
+            </div>
+        </div>
+        <h1><span id="currentDays" aria-live="polite">551</span> Days Since FaZe CS2 Trophy (IEM Chengdu 2024)</h1>
+        <p class="meta">Hover over points for tournament details, finishes, and rosters. Tap legend to toggle past/upcoming tournaments.</p>
         <canvas id="trophyDroughtChart"></canvas>
+        <div class="toolbar" role="group" aria-label="Chart controls">
+            <button id="resetZoomBtn" class="btn btn-blue" type="button">Reset Zoom</button>
+            <button id="downloadPngBtn" class="btn" type="button">Download PNG</button>
+        </div>
         <p class="note">
-            <strong>Notes:</strong> Past tournaments (up to CS Asia Championships 2025) in red; upcoming in blue. Rosters/finishes sourced from Liquipedia, HLTV, Esports Earnings.<grok:render type="render_inline_citation">
-<argument name="citation_id">2</argument>
-</grok:render><grok:render type="render_inline_citation">
-<argument name="citation_id">14</argument>
-</grok:render><grok:render type="render_inline_citation">
-<argument name="citation_id">8</argument>
-</grok:render><grok:render type="render_inline_citation">
-<argument name="citation_id">70</argument>
-</grok:render><grok:render type="render_inline_citation">
-<argument name="citation_id">86</argument>
-</grok:render> CS Asia Championships 2025 ongoing (FaZe 9th-12th so far). Check HLTV.org for updates.
+            <strong>Notes:</strong> Past tournaments (up to CS Asia Championships 2025) in red; upcoming in blue. Rosters/finishes sourced from Liquipedia, HLTV, Esports Earnings. CS Asia Championships 2025 ongoing (FaZe 9th-12th so far). Check HLTV.org for updates.
         </p>
         <h3>Past Tournament Finishes & Rosters</h3>
-        <table>
+        <div class="table-controls">
+            <label class="sr-only" for="searchInput">Search table</label>
+            <div class="search">
+                <input id="searchInput" class="input" placeholder="Search tournaments, finishes, players..." autocomplete="off" />
+            </div>
+            <div>
+                <button id="exportCsvBtn" class="btn" type="button">Export CSV</button>
+            </div>
+        </div>
+        <table aria-label="Past tournament finishes and rosters" role="table">
             <thead>
-                <tr><th>Tournament</th><th>Start Date</th><th>Finish</th><th>Days Since Win</th><th>Roster</th></tr>
+                <tr role="row">
+                    <th data-key="label" scope="col" aria-sort="none" tabindex="0">Tournament</th>
+                    <th data-key="date" scope="col" aria-sort="none" tabindex="0">Start Date</th>
+                    <th data-key="finish" scope="col" aria-sort="none" tabindex="0">Finish</th>
+                    <th data-key="days" scope="col" aria-sort="none" tabindex="0">Days Since Win</th>
+                    <th data-key="roster" scope="col" aria-sort="none" tabindex="0">Roster</th>
+                </tr>
             </thead>
-            <tbody id="finishesTable"></tbody>
+            <tbody id="finishesTable" role="rowgroup"></tbody>
         </table>
     </div>
 
     <script>
+        // Theme + timestamp
+        (function initThemeAndMeta() {
+            const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+            const savedTheme = localStorage.getItem('theme');
+            const effectiveTheme = savedTheme || (prefersDark ? 'dark' : 'light');
+            document.documentElement.setAttribute('data-theme', effectiveTheme);
+            const themeToggle = document.getElementById('themeToggle');
+            if (themeToggle) {
+                const setButtonState = () => {
+                    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                    themeToggle.setAttribute('aria-pressed', String(isDark));
+                    themeToggle.textContent = isDark ? '🌙 Dark' : '☀️ Light';
+                };
+                setButtonState();
+                themeToggle.addEventListener('click', () => {
+                    const current = document.documentElement.getAttribute('data-theme');
+                    const next = current === 'dark' ? 'light' : 'dark';
+                    document.documentElement.setAttribute('data-theme', next);
+                    localStorage.setItem('theme', next);
+                    setButtonState();
+                });
+            }
+            const lastUpdatedEl = document.getElementById('lastUpdated');
+            if (lastUpdatedEl) {
+                const updated = new Date();
+                lastUpdatedEl.textContent = updated.toLocaleString(undefined, {
+                    year: 'numeric', month: 'short', day: '2-digit', hour: '2-digit', minute: '2-digit'
+                });
+            }
+        })();
+
         // Player image mapping (HLTV URLs)
         const playerImages = {
             'karrigan': { img: 'https://www.hltv.org/img/static/player/7951.png', link: 'https://www.hltv.org/player/7951/karrigan' },
@@ -204,8 +346,8 @@
             'ropz': { img: 'https://www.hltv.org/img/static/player/11816.png', link: 'https://www.hltv.org/player/11816/ropz' },
             'EliGE': { img: 'https://www.hltv.org/img/static/player/14447.png', link: 'https://www.hltv.org/player/14447/elige' },
             's1mple': { img: 'https://www.hltv.org/img/static/player/7938.png', link: 'https://www.hltv.org/player/7938/s1mple' },
-            'jcobbb': { img: 'https://www.hltv.org/img/static/team/logo/6667.png', link: 'https://www.hltv.org/team/6667/faze' }, // Placeholder
-            'exit': { img: 'https://www.hltv.org/img/static/team/logo/6667.png', link: 'https://www.hltv.org/team/6667/faze' } // Placeholder
+            'jcobbb': { img: 'https://www.hltv.org/img/static/player/22383.png', link: 'https://www.hltv.org/player/22383/jcobbb' },
+            'exit': { img: 'https://www.hltv.org/img/static/player/11154.png', link: 'https://www.hltv.org/player/11154/exit' }
         };
 
         // Data: Tournaments, days, finishes, rosters
@@ -259,17 +401,118 @@
             return imagesHtml;
         }
 
-        // Populate table with images
+        // Table rendering, search, sort, export
         const tableBody = document.getElementById('finishesTable');
-        tournamentData.forEach(item => {
-            const row = tableBody.insertRow();
-            const imagesHtml = generatePlayerImages(item.fullRoster);
-            row.innerHTML = `<td>${item.label}</td><td>${item.date}</td><td class="past">${item.finish}</td><td>${item.days}</td><td class="roster past">${item.fullRoster} ${imagesHtml}</td>`;
+        const searchInput = document.getElementById('searchInput');
+        const exportCsvBtn = document.getElementById('exportCsvBtn');
+        const tableHeaders = Array.from(document.querySelectorAll('thead th'));
+
+        const baseRows = tournamentData.map(d => ({
+            label: d.label,
+            date: d.date,
+            finish: d.finish,
+            days: d.days,
+            roster: d.fullRoster
+        }));
+
+        let currentRows = [...baseRows];
+        let currentSort = { key: 'date', direction: 'asc' };
+
+        function renderTable(rows) {
+            tableBody.innerHTML = '';
+            rows.forEach(item => {
+                const row = document.createElement('tr');
+                const imagesHtml = generatePlayerImages(item.roster);
+                row.innerHTML = `
+                    <td>${item.label}</td>
+                    <td>${item.date}</td>
+                    <td class="past">${item.finish}</td>
+                    <td>${item.days}</td>
+                    <td class="roster past">${item.roster} ${imagesHtml}</td>
+                `;
+                tableBody.appendChild(row);
+            });
+        }
+
+        function compare(a, b, key) {
+            if (key === 'days') return Number(a.days) - Number(b.days);
+            if (key === 'date') return new Date(a.date) - new Date(b.date);
+            return String(a[key]).localeCompare(String(b[key]));
+        }
+
+        function sortBy(key) {
+            if (currentSort.key === key) {
+                currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+            } else {
+                currentSort = { key, direction: 'asc' };
+            }
+            const dir = currentSort.direction === 'asc' ? 1 : -1;
+            currentRows.sort((a, b) => compare(a, b, key) * dir);
+            tableHeaders.forEach(th => th.setAttribute('aria-sort', th.dataset.key === key ? currentSort.direction : 'none'));
+            renderTable(currentRows);
+        }
+
+        tableHeaders.forEach(th => {
+            th.addEventListener('click', () => sortBy(th.dataset.key));
+            th.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    sortBy(th.dataset.key);
+                }
+            });
         });
+
+        function filterRows(query) {
+            const q = query.trim().toLowerCase();
+            if (!q) return [...baseRows];
+            return baseRows.filter(r =>
+                r.label.toLowerCase().includes(q) ||
+                r.date.toLowerCase().includes(q) ||
+                r.finish.toLowerCase().includes(q) ||
+                r.roster.toLowerCase().includes(q)
+            );
+        }
+
+        searchInput?.addEventListener('input', (e) => {
+            currentRows = filterRows(e.target.value);
+            // Keep current sort
+            const dir = currentSort.direction === 'asc' ? 1 : -1;
+            currentRows.sort((a, b) => compare(a, b, currentSort.key) * dir);
+            renderTable(currentRows);
+        });
+
+        exportCsvBtn?.addEventListener('click', () => {
+            const header = ['Tournament', 'Start Date', 'Finish', 'Days Since Win', 'Roster'];
+            const rows = currentRows.map(r => [r.label, r.date, r.finish, r.days, r.roster]);
+            const csv = [header, ...rows]
+                .map(cols => cols
+                    .map(val => '"' + String(val).replace(/"/g, '""') + '"')
+                    .join(','))
+                .join('\n');
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'faze_tournament_finishes.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        });
+
+        // initial render
+        sortBy('date');
 
         // Chart
         const ctx = document.getElementById('trophyDroughtChart').getContext('2d');
-        new Chart(ctx, {
+        // Register optional zoom plugin if available
+        (function registerZoomPlugin(){
+            const zoomPlugin = window.ChartZoom || window['chartjs-plugin-zoom'];
+            if (zoomPlugin && window.Chart?.register) {
+                window.Chart.register(zoomPlugin);
+            }
+        })();
+
+        const todayLabel = new Date().toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: '2-digit' });
+        const chart = new Chart(ctx, {
             type: 'line',
             data: {
                 labels: allLabels,
@@ -277,7 +520,7 @@
                     {
                         label: 'Days Since Last Trophy (Past)',
                         data: pastDays,
-                        borderColor: '#ff6b6b',
+                        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#ff6b6b',
                         backgroundColor: 'rgba(255, 107, 107, 0.3)',
                         fill: true,
                         tension: 0.2,
@@ -287,7 +530,7 @@
                             display: 'auto',
                             align: 'top',
                             offset: 8,
-                            color: '#ff6b6b',
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--accent').trim() || '#ff6b6b',
                             font: { size: 12, weight: 'bold' },
                             formatter: (value, ctx) => {
                                 if (ctx.dataIndex < tournamentData.length) return tournamentData[ctx.dataIndex].finish;
@@ -298,7 +541,7 @@
                     {
                         label: 'Days Since Last Trophy (Upcoming)',
                         data: upcomingDays,
-                        borderColor: '#4b6bff',
+                        borderColor: getComputedStyle(document.documentElement).getPropertyValue('--accent-blue').trim() || '#4b6bff',
                         backgroundColor: 'rgba(75, 107, 255, 0.3)',
                         fill: true,
                         tension: 0.2,
@@ -308,7 +551,7 @@
                             display: 'auto',
                             align: 'top',
                             offset: 8,
-                            color: '#4b6bff',
+                            color: getComputedStyle(document.documentElement).getPropertyValue('--accent-blue').trim() || '#4b6bff',
                             font: { size: 12, weight: 'bold' },
                             formatter: (value, ctx) => {
                                 const idx = ctx.dataIndex - tournamentData.length;
@@ -324,7 +567,7 @@
                 plugins: {
                     legend: {
                         display: true,
-                        labels: { color: '#ffffff', font: { size: 14 } },
+                        labels: { color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#ffffff', font: { size: 14 } },
                         onClick: (e, legendItem, legend) => {
                             const index = legendItem.datasetIndex;
                             const ci = legend.chart;
@@ -335,7 +578,7 @@
                     title: {
                         display: true,
                         text: 'Days Since IEM Chengdu 2024 (April 14, 2024)',
-                        color: '#ffffff',
+                        color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#ffffff',
                         font: { size: 20, weight: '600' }
                     },
                     annotation: {
@@ -344,10 +587,10 @@
                                 type: 'line',
                                 xMin: tournamentData[tournamentData.length - 1].label,
                                 xMax: tournamentData[tournamentData.length - 1].label,
-                                borderColor: '#a1a5b7',
+                                borderColor: getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#a1a5b7',
                                 borderWidth: 2,
                                 label: {
-                                    content: 'Today (Oct 16, 2025)',
+                                    content: `Today (${todayLabel})`,
                                     display: true,
                                     position: 'top',
                                     backgroundColor: 'rgba(0, 0, 0, 0.8)',
@@ -385,23 +628,70 @@
                             const idx = ctx.dataIndex;
                             return idx < tournamentData.length ? finishesPast[idx] : finishesUpcoming[idx - tournamentData.length];
                         }
+                    },
+                    zoom: {
+                        pan: { enabled: true, mode: 'xy', modifierKey: 'ctrl' },
+                        zoom: {
+                            wheel: { enabled: true },
+                            pinch: { enabled: true },
+                            mode: 'xy'
+                        }
                     }
                 },
                 scales: {
                     y: {
                         beginAtZero: true,
-                        title: { display: true, text: 'Days Since Last Trophy', color: '#ffffff', font: { size: 14 } },
+                        title: { display: true, text: 'Days Since Last Trophy', color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#ffffff', font: { size: 14 } },
                         grid: { color: 'rgba(255, 255, 255, 0.1)' },
-                        ticks: { color: '#d1d4db' }
+                        ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#d1d4db' }
                     },
                     x: {
-                        title: { display: true, text: 'Tournament (Start Date)', color: '#ffffff', font: { size: 14 } },
+                        title: { display: true, text: 'Tournament (Start Date)', color: getComputedStyle(document.documentElement).getPropertyValue('--text').trim() || '#ffffff', font: { size: 14 } },
                         grid: { display: false },
-                        ticks: { color: '#d1d4db', autoSkip: false, maxRotation: 45, minRotation: 45 }
+                        ticks: { color: getComputedStyle(document.documentElement).getPropertyValue('--muted').trim() || '#d1d4db', autoSkip: false, maxRotation: 45, minRotation: 45 }
                     }
                 }
             },
             plugins: [ChartDataLabels]
+        });
+
+        // Chart toolbar actions
+        const resetZoomBtn = document.getElementById('resetZoomBtn');
+        resetZoomBtn?.addEventListener('click', () => { chart.resetZoom && chart.resetZoom(); });
+        const downloadPngBtn = document.getElementById('downloadPngBtn');
+        downloadPngBtn?.addEventListener('click', () => {
+            const a = document.createElement('a');
+            a.href = chart.toBase64Image('image/png', 1);
+            a.download = 'faze_trophy_drought_chart.png';
+            a.click();
+        });
+
+        // Re-apply theme colors to chart on theme toggle
+        function applyThemeColorsToChart() {
+            const styles = getComputedStyle(document.documentElement);
+            const text = styles.getPropertyValue('--text').trim() || '#ffffff';
+            const muted = styles.getPropertyValue('--muted').trim() || '#d1d4db';
+            const accent = styles.getPropertyValue('--accent').trim() || '#ff6b6b';
+            const blue = styles.getPropertyValue('--accent-blue').trim() || '#4b6bff';
+            chart.data.datasets[0].borderColor = accent;
+            chart.data.datasets[0].datalabels.color = accent;
+            chart.data.datasets[1].borderColor = blue;
+            chart.data.datasets[1].datalabels.color = blue;
+            chart.options.plugins.legend.labels.color = text;
+            chart.options.plugins.title.color = text;
+            if (chart.options.plugins.annotation?.annotations?.line1) {
+                chart.options.plugins.annotation.annotations.line1.borderColor = muted;
+            }
+            chart.options.scales.x.title.color = text;
+            chart.options.scales.y.title.color = text;
+            chart.options.scales.x.ticks.color = muted;
+            chart.options.scales.y.ticks.color = muted;
+            chart.update();
+        }
+        const themeToggleBtn = document.getElementById('themeToggle');
+        themeToggleBtn?.addEventListener('click', () => {
+            // Allow theme attributes to update, then sync chart
+            setTimeout(applyThemeColorsToChart, 0);
         });
     </script>
 </body>
